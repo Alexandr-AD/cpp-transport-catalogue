@@ -139,7 +139,7 @@ void catalogueInput::InputReader::ApplyCommands([[maybe_unused]] TransportCatalo
             route = ParseRoute(command.description);
             for (std::string_view s : route)
             {
-                stops_ptr.push_back(catalogue.GetStop(s));
+                stops_ptr.push_back(const_cast<TransportCatalogue::Stop*>(catalogue.GetStop(s)));
             }
             catalogue.AddBus({command.id, stops_ptr});
         }

@@ -21,12 +21,11 @@ void ParseAndPrintStat(const TransportCatalogue &tansport_catalogue, std::string
             output << request.data() + ": not found"s << endl;
             return;
         }
-        int R = CountStops(*bus);
-        int U = CountUniqueStops(*bus);
-        double L = GetRouteLength(*bus);
 
-        output << request.data() + ": "s << R << " stops on route, " << U << " unique stops, "
-                << setprecision(6) << L << " route length" << endl;
+        vector<string> bus_stat = tansport_catalogue.StatsOfBus(bus);
+
+        output << request.data() + ": "s << bus_stat[0] << " stops on route, "s << bus_stat[1] << " unique stops, "s
+                << setprecision(6) << stod(bus_stat[2]) << " route length"s << endl;
     }
     else
     {

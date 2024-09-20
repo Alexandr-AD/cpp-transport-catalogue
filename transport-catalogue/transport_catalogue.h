@@ -25,9 +25,10 @@ public:
 	};
 	void AddBus(Bus &&bus);
 	void AddStop(Stop &&stop);
-	Bus *GetBus(std::string_view name) const;
-	Stop *GetStop(std::string_view name) const;
+	const Bus *GetBus(std::string_view name) const;
+	const Stop *GetStop(std::string_view name) const;
 	std::set<std::string_view> StatsOfStop(std::string_view name) const;
+	std::vector<std::string> StatsOfBus(const Bus *bus) const;
 
 private:
 	std::deque<Bus> buses_;

@@ -15,19 +15,21 @@ void TransportCatalogue::AddStop(Stop &&stop)
     stops_.push_back(std::move(stop));
     map_stops_[stops_.back().name] = &stops_.back();
 }
-TransportCatalogue::Bus *TransportCatalogue::GetBus(std::string_view name) const
+const TransportCatalogue::Bus *TransportCatalogue::GetBus(std::string_view name) const
 {
-    if (map_buses_.count(name.data()))
+    auto res = map_buses_.find(name);
+    if (res != map_buses_.end())
     {
-        return map_buses_.at(name.data());
+        return (*res).second;
     }
     return nullptr;
 }
-TransportCatalogue::Stop *TransportCatalogue::GetStop(std::string_view name) const
+const TransportCatalogue::Stop *TransportCatalogue::GetStop(std::string_view name) const
 {
-    if (map_stops_.count(name))
+    auto res = map_stops_.find(name);
+    if (res != map_stops_.end())
     {
-        return map_stops_.at(name);
+        return (*res).second;
     }
     return nullptr;
 }
@@ -41,7 +43,7 @@ std::set<std::string_view> TransportCatalogue::StatsOfStop(std::string_view stop
             if (bus->stops.size())
             {
                 auto it = find_if(bus->stops.begin(), bus->stops.end(), [stop_name](TransportCatalogue::Stop *lhs)
-                               { return lhs->name == stop_name; });
+                                  { return lhs->name == stop_name; });
                 if (it != bus->stops.end())
                 {
                     names_buses.insert(bus->name);
@@ -51,6 +53,15 @@ std::set<std::string_view> TransportCatalogue::StatsOfStop(std::string_view stop
         map_stops_.at(stop_name)->buses = move(names_buses);
     }
     return map_stops_.at(stop_name)->buses;
+}
+
+std::vector<std::string> TransportCatalogue::StatsOfBus(const Bus *bus) const
+{
+    std::vector<std::string> res(3);
+    res[0] = to_string(CountStops(*bus));
+    res[1] = to_string(CountUniqueStops(*bus));
+    res[2] = to_string(GetRouteLength(*bus));
+    return res;
 }
 
 int CountUniqueStops(const TransportCatalogue::Bus &bus)
