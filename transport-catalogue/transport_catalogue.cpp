@@ -42,7 +42,7 @@ std::set<std::string_view> TransportCatalogue::StatsOfStop(std::string_view stop
         {
             if (bus->stops.size())
             {
-                auto it = find_if(bus->stops.begin(), bus->stops.end(), [stop_name](TransportCatalogue::Stop *lhs)
+                auto it = find_if(bus->stops.begin(), bus->stops.end(), [stop_name](const TransportCatalogue::Stop *lhs)
                                   { return lhs->name == stop_name; });
                 if (it != bus->stops.end())
                 {
@@ -55,18 +55,23 @@ std::set<std::string_view> TransportCatalogue::StatsOfStop(std::string_view stop
     return map_stops_.at(stop_name)->buses;
 }
 
-std::vector<std::string> TransportCatalogue::StatsOfBus(const Bus *bus) const
+TransportCatalogue::BusStats TransportCatalogue::StatsOfBus(std::string_view bus_name) const
 {
-    std::vector<std::string> res(3);
-    res[0] = to_string(CountStops(*bus));
-    res[1] = to_string(CountUniqueStops(*bus));
-    res[2] = to_string(GetRouteLength(*bus));
+    BusStats res{-1, -1, -1};
+    auto bus = GetBus(bus_name);
+    if (bus == nullptr)
+    {
+        return res;
+    }
+    res.StopsOnRoute = CountStops(*bus);
+    res.UniqueStopsOnRoute = CountUniqueStops(*bus);
+    res.RouteLength = GetRouteLength(*bus);
     return res;
 }
 
 int CountUniqueStops(const TransportCatalogue::Bus &bus)
 {
-    std::unordered_set<TransportCatalogue::Stop *> tmp(bus.stops.begin(), bus.stops.end());
+    std::unordered_set<const TransportCatalogue::Stop *> tmp(bus.stops.begin(), bus.stops.end());
     return tmp.size();
 }
 int CountStops(const TransportCatalogue::Bus &bus)

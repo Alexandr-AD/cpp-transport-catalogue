@@ -134,12 +134,12 @@ void catalogueInput::InputReader::ApplyCommands([[maybe_unused]] TransportCatalo
         if (command.command == "Bus"s)
         {
             std::vector<std::string_view> route;
-            std::vector<TransportCatalogue::Stop *> stops_ptr;
+            std::vector<const TransportCatalogue::Stop *> stops_ptr;
 
             route = ParseRoute(command.description);
             for (std::string_view s : route)
             {
-                stops_ptr.push_back(const_cast<TransportCatalogue::Stop*>(catalogue.GetStop(s)));
+                stops_ptr.push_back(catalogue.GetStop(s));
             }
             catalogue.AddBus({command.id, stops_ptr});
         }

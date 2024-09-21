@@ -15,17 +15,16 @@ void ParseAndPrintStat(const TransportCatalogue &tansport_catalogue, std::string
 
     if (request.substr(0, request.find_first_of(' ')) == "Bus"sv)
     {
-        auto bus = tansport_catalogue.GetBus(s);
-        if (bus == nullptr)
+        auto bus_stat = tansport_catalogue.StatsOfBus(s);
+        // auto bus = tansport_catalogue.GetBus(s);
+        if (bus_stat.RouteLength == -1 || bus_stat.StopsOnRoute == -1 || bus_stat.UniqueStopsOnRoute == -1)
         {
             output << request.data() + ": not found"s << endl;
             return;
         }
 
-        vector<string> bus_stat = tansport_catalogue.StatsOfBus(bus);
-
-        output << request.data() + ": "s << bus_stat[0] << " stops on route, "s << bus_stat[1] << " unique stops, "s
-                << setprecision(6) << stod(bus_stat[2]) << " route length"s << endl;
+        output << request.data() + ": "s << bus_stat.StopsOnRoute << " stops on route, "s << bus_stat.UniqueStopsOnRoute << " unique stops, "s
+                << setprecision(6) << bus_stat.RouteLength << " route length"s << endl;
     }
     else
     {
