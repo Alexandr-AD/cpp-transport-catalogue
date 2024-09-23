@@ -6,6 +6,7 @@
 #include <vector>
 #include <unordered_map>
 #include <set>
+#include <optional>
 
 #include "geo.h"
 
@@ -35,7 +36,7 @@ public:
 	const Bus *GetBus(std::string_view name) const;
 	const Stop *GetStop(std::string_view name) const;
 	std::set<std::string_view> StatsOfStop(std::string_view name) const;
-	BusStats StatsOfBus(std::string_view bus_name) const;
+	std::optional<TransportCatalogue::BusStats> StatsOfBus(std::string_view bus_name) const;
 
 private:
 	std::deque<Bus> buses_;

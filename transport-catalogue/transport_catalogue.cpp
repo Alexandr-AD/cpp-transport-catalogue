@@ -55,18 +55,18 @@ std::set<std::string_view> TransportCatalogue::StatsOfStop(std::string_view stop
     return map_stops_.at(stop_name)->buses;
 }
 
-TransportCatalogue::BusStats TransportCatalogue::StatsOfBus(std::string_view bus_name) const
+std::optional<TransportCatalogue::BusStats> TransportCatalogue::StatsOfBus(std::string_view bus_name) const
 {
-    BusStats res{-1, -1, -1};
     auto bus = GetBus(bus_name);
-    if (bus == nullptr)
+    if (bus != nullptr)
     {
+        BusStats res;
+        res.StopsOnRoute = CountStops(*bus);
+        res.UniqueStopsOnRoute = CountUniqueStops(*bus);
+        res.RouteLength = GetRouteLength(*bus);
         return res;
     }
-    res.StopsOnRoute = CountStops(*bus);
-    res.UniqueStopsOnRoute = CountUniqueStops(*bus);
-    res.RouteLength = GetRouteLength(*bus);
-    return res;
+    return {};
 }
 
 int CountUniqueStops(const TransportCatalogue::Bus &bus)
