@@ -131,6 +131,9 @@ void catalogueInput::InputReader::ApplyCommands([[maybe_unused]] TransportCatalo
     }
     for (const auto &command : commands_)
     {
+        if (command.command == "Stop"s){
+            catalogue.AddStopDist(command.id, command.description);
+        }
         if (command.command == "Bus"s)
         {
             std::vector<std::string_view> route;
