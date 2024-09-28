@@ -41,7 +41,7 @@ public:
 
 	void AddBus(Bus &&bus);
 	void AddStop(Stop &&stop);
-	void AddStopDist(std::string_view stop_name, std::string_view command_descr);
+	void SetStopDist(std::string_view stop_name, std::string_view command_descr);
 	std::optional<int> GetStopDist(std::string_view begin_stop_name, std::string_view dest_stop_name) const;
 	const Bus *GetBus(std::string_view name) const;
 	const Stop *GetStop(std::string_view name) const;

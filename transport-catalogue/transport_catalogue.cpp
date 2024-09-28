@@ -1,6 +1,5 @@
 #include <unordered_set>
 #include <algorithm>
-// #include <string>
 
 #include "transport_catalogue.h"
 
@@ -16,23 +15,22 @@ void TransportCatalogue::AddStop(Stop &&stop)
     stops_.push_back(std::move(stop));
     map_stops_[stops_.back().name] = &stops_.back();
 }
-void TransportCatalogue::AddStopDist(std::string_view cur_stop_name, std::string_view command_descr)
+void TransportCatalogue::SetStopDist(std::string_view cur_stop_name, std::string_view command_descr)
 {
-    string tmp_string = command_descr.substr(command_descr.find(',', command_descr.find(',') + 1) + 2).data();
+    string tmp_string = command_descr.substr(command_descr.find(',', command_descr.find(',') + 1) + 1 ).data();
+    tmp_string = tmp_string.substr(tmp_string.find_first_not_of(' '));
     auto cur_stop = GetStop(cur_stop_name);
 
     while (!tmp_string.empty())
     {
-        string tmp;
         size_t num_size = tmp_string.find('m');
 
         int dist_btn_stops = stoi(tmp_string.substr(0, num_size));
 
-        tmp_string = tmp_string.substr(num_size + 5);
+        tmp_string = tmp_string.substr(tmp_string.find('o')+1);
+        tmp_string = tmp_string.substr(tmp_string.find_first_not_of(' '));
 
         auto pos_comma = tmp_string.find(',');
-        if (pos_comma < 100)
-            tmp = tmp_string.substr(0, pos_comma);
         auto destination_stop = pos_comma != tmp_string.npos ? GetStop(tmp_string.substr(0, pos_comma)) : GetStop(tmp_string);
 
         distance_between_stops_[{cur_stop, destination_stop}] = dist_btn_stops;
@@ -43,7 +41,8 @@ void TransportCatalogue::AddStopDist(std::string_view cur_stop_name, std::string
         }
         else
         {
-            tmp_string = tmp_string.substr(tmp_string.find(',') + 2);
+            tmp_string = tmp_string.substr(tmp_string.find(',') + 1);
+            tmp_string = tmp_string.substr(tmp_string.find_first_not_of(' '));
         }
     }
 }
