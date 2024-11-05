@@ -1,5 +1,6 @@
 #include <unordered_set>
 #include <algorithm>
+#include <set>
 
 #include "transport_catalogue.h"
 
@@ -15,36 +16,13 @@ void TransportCatalogue::AddStop(Stop &&stop)
     stops_.push_back(std::move(stop));
     map_stops_[stops_.back().name] = &stops_.back();
 }
-void TransportCatalogue::SetStopDist(std::string_view cur_stop_name, std::string_view command_descr)
+void TransportCatalogue::SetStopDist(std::string_view cur_stop_name, std::string_view dest_stop_name, int dist)
 {
-    string tmp_string = command_descr.substr(command_descr.find(',', command_descr.find(',') + 1) + 1 ).data();
-    tmp_string = tmp_string.substr(tmp_string.find_first_not_of(' '));
     auto cur_stop = GetStop(cur_stop_name);
 
-    while (!tmp_string.empty())
-    {
-        size_t num_size = tmp_string.find('m');
+    auto destination_stop = GetStop(dest_stop_name);
 
-        int dist_btn_stops = stoi(tmp_string.substr(0, num_size));
-
-        tmp_string = tmp_string.substr(tmp_string.find('o')+1);
-        tmp_string = tmp_string.substr(tmp_string.find_first_not_of(' '));
-
-        auto pos_comma = tmp_string.find(',');
-        auto destination_stop = pos_comma != tmp_string.npos ? GetStop(tmp_string.substr(0, pos_comma)) : GetStop(tmp_string);
-
-        distance_between_stops_[{cur_stop, destination_stop}] = dist_btn_stops;
-
-        if (tmp_string.find(',') == tmp_string.npos)
-        {
-            tmp_string.clear();
-        }
-        else
-        {
-            tmp_string = tmp_string.substr(tmp_string.find(',') + 1);
-            tmp_string = tmp_string.substr(tmp_string.find_first_not_of(' '));
-        }
-    }
+    distance_between_stops_[{cur_stop, destination_stop}] = dist;
 }
 std::optional<int> TransportCatalogue::GetStopDist(std::string_view begin_stop_name, std::string_view dest_stop_name) const
 {
@@ -60,7 +38,7 @@ std::optional<int> TransportCatalogue::GetStopDist(std::string_view begin_stop_n
     }
     return nullopt;
 }
-const TransportCatalogue::Bus *TransportCatalogue::GetBus(std::string_view name) const
+const Bus *TransportCatalogue::GetBus(std::string_view name) const
 {
     auto res = map_buses_.find(name);
     if (res != map_buses_.end())
@@ -69,7 +47,7 @@ const TransportCatalogue::Bus *TransportCatalogue::GetBus(std::string_view name)
     }
     return nullptr;
 }
-const TransportCatalogue::Stop *TransportCatalogue::GetStop(std::string_view name) const
+const Stop *TransportCatalogue::GetStop(std::string_view name) const
 {
     auto res = map_stops_.find(name);
     if (res != map_stops_.end())
@@ -87,7 +65,7 @@ std::set<std::string_view> TransportCatalogue::StatsOfStop(std::string_view stop
         {
             if (bus->stops.size())
             {
-                auto it = find_if(bus->stops.begin(), bus->stops.end(), [stop_name](const TransportCatalogue::Stop *lhs)
+                auto it = find_if(bus->stops.begin(), bus->stops.end(), [stop_name](const Stop *lhs)
                                   { return lhs->name == stop_name; });
                 if (it != bus->stops.end())
                 {
@@ -100,7 +78,7 @@ std::set<std::string_view> TransportCatalogue::StatsOfStop(std::string_view stop
     return map_stops_.at(stop_name)->buses;
 }
 
-std::optional<TransportCatalogue::BusStats> TransportCatalogue::StatsOfBus(std::string_view bus_name) const
+std::optional<BusStats> TransportCatalogue::StatsOfBus(std::string_view bus_name) const
 {
     auto bus = GetBus(bus_name);
     if (bus != nullptr)
@@ -109,35 +87,87 @@ std::optional<TransportCatalogue::BusStats> TransportCatalogue::StatsOfBus(std::
         res.StopsOnRoute = CountStops(*bus);
         res.UniqueStopsOnRoute = CountUniqueStops(*bus);
         res.RouteLength = ComputeRouteLength(*bus);
-        res.curvature = res.RouteLength/GetRouteLength(*bus);
+        res.curvature = res.RouteLength / GetRouteLength(*bus);
         return res;
     }
     return {};
 }
-int TransportCatalogue::ComputeRouteLength(const Bus & bus) const
+int TransportCatalogue::ComputeRouteLength(const Bus &bus) const
 {
     int res = 0;
     optional<int> tmp = 0;
     for (size_t i = 0; i < bus.stops.size() - 1; ++i)
     {
-        tmp = GetStopDist(bus.stops[i]->name, bus.stops[i+1]->name);
-        if(tmp.has_value()) {
+        tmp = GetStopDist(bus.stops[i]->name, bus.stops[i + 1]->name);
+        if (tmp.has_value())
+        {
             res += tmp.value();
         }
     }
     return res;
 }
 
-int CountUniqueStops(const TransportCatalogue::Bus &bus)
+// координаты остановок марщрутов,
+// отсортированные по названиям маршрутов
+std::vector<std::pair<std::vector<std::pair<geo::Coordinates, std::string>>, std::pair<std::string, bool>>> TransportCatalogue::GetBusStopsCoords(/* const Bus &bus */) const
 {
-    std::unordered_set<const TransportCatalogue::Stop *> tmp(bus.stops.begin(), bus.stops.end());
+    std::vector<std::pair<std::vector<std::pair<geo::Coordinates, std::string>>, std::pair<std::string, bool>>> res;
+    res.reserve(buses_.size());
+    std::set<std::string_view> buses_names;
+    for (const auto &bus : buses_)
+    {
+        if (bus.stops.size() > 0)
+        {
+            buses_names.insert(bus.name);
+        }
+    }
+    for (const auto &bus_name : buses_names)
+    {
+        std::vector<std::pair<geo::Coordinates, std::string>> stopCoords;
+        for (const auto &stop : GetBus(bus_name)->stops)
+        {
+            stopCoords.push_back({stop->coords, stop->name});
+        }
+        res.push_back({stopCoords, {bus_name.data(), GetBus(bus_name)->is_roundtrip}});
+    }
+    return res;
+}
+
+std::vector<geo::Coordinates> TransportCatalogue::GetStopsCoords() const
+{
+    std::vector<geo::Coordinates> res;
+    res.reserve(stops_.size());
+    std::vector<const Stop*> sort_stops; // = stops_;
+    for(auto & stop: stops_) {
+        sort_stops.push_back(&stop);
+    }
+    std::sort(sort_stops.begin(), sort_stops.end(), [](const Stop* lhs, const Stop* rhs) {
+        return lhs->name < rhs->name;
+    });
+    for (const auto &stop : sort_stops)
+    {
+        for (const auto &bus : buses_)
+        {
+            if (std::find(bus.stops.begin(), bus.stops.end(), stop) != std::end(bus.stops))
+            {
+                res.push_back(stop->coords);
+                break;
+            }
+        }
+    }
+    return res;
+}
+
+int CountUniqueStops(const Bus &bus)
+{
+    std::unordered_set<const Stop *> tmp(bus.stops.begin(), bus.stops.end());
     return tmp.size();
 }
-int CountStops(const TransportCatalogue::Bus &bus)
+int CountStops(const Bus &bus)
 {
     return bus.stops.size();
 }
-double GetRouteLength(const TransportCatalogue::Bus &bus)
+double GetRouteLength(const Bus &bus)
 {
     double res = 0;
     for (size_t i = 0; i < bus.stops.size() - 1; ++i)
