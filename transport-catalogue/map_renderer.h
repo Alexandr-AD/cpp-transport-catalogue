@@ -21,98 +21,24 @@ namespace renderer
         double dx_ = 0;
         double dy_ = 0;
     };
-    struct Color
+    
+    struct RenderSettings
     {
-
-        std::string name; // имя цвета в виде строки
-        int r = 0,
-            g = 0,
-            b = 0;      // компоненты цвета в формате svg::Rgb
-        double a = 0.0; // opacity в формате svg::Rgba
-
-        Color(const Color &other)
-        {
-            name = other.name;
-            r = other.r;
-            g = other.g;
-            b = other.b;
-            a = other.a;
-        }
-
-        Color() = default;
-
-        // Конструктор для инициализации цвета из строки
-        Color(std::string name_) : name(name_), r(0), g(0), b(0), a(1.0) {}
-
-        // Конструктор для инициализации цвета из массива из трёх целых чисел
-        Color(int r_, int g_, int b_) : name(""), r(r_), g(g_), b(b_), a(1.0) {}
-
-        // Конструктор для инициализации цвета из массива из четырёх элементов
-        Color(int r_, int g_, int b_, float a_) : name(""), r(r_), g(g_), b(b_), a(a_) {}
-
-        void operator=(const Color &other);
+        RenderSettings() = default;
+ 
+        double width_ = 0;                     // ширина изображения в пикселях
+        double height_ = 0;                    // высота изображения в пикселях
+        double padding_ = 0;                   // отступ краёв карты от границ SVG-документа
+        double line_width_ = 0;                // толщина линий, которыми рисуются автобусные маршруты
+        double stop_radius_ = 0;               // радиус окружностей, которыми обозначаются остановки
+        unsigned int bus_label_font_size_ = 0; // размер текста, которым написаны названия автобусных маршрутов
+        offset bus_label_offset_;              // смещение надписи с названием маршрута относительно координат конечной остановки на карте
+        int stop_label_font_size_ = 0;         // размер текста, которым отображаются названия остановок
+        offset stop_label_offset_;             // смещение названия остановки относительно её координат на карте
+        svg::Color underlayer_color_;               // цвет подложки под названиями остановок и маршрутов
+        double underlayer_width_ = 0;          // толщина подложки под названиями остановок и маршрутов
+        std::vector<svg::Color> color_palette_;     // цветовая палитра
     };
-    struct render_settings
-    {
-        render_settings() = default;
-        /*  render_settings(double width,
-                         double height,
-                         double padding,
-                         int line_width,
-                         double stop_radius,
-                         int bus_label_font_size,
-                         offset bus_label_offset,
-                         int stop_label_font_size,
-                         offset stop_label_offset,
-                         Color underlayer_color,
-                         double underlayer_width,
-                         std::vector<Color> color_palette)
-         {
-             width_ = width;
-             height_ = height;
-             padding_ = padding;
-             line_width_ = line_width;
-             stop_radius_ = stop_radius;
-             bus_label_font_size_ = bus_label_font_size;
-             bus_label_offset_ = bus_label_offset;
-             stop_label_font_size_ = stop_label_font_size;
-             stop_label_offset_ = stop_label_offset;
-             underlayer_color_ = underlayer_color;
-             underlayer_width_ = underlayer_width;
-             color_palette_ = color_palette_;
-         } */
-        render_settings(const render_settings &st)
-        {
-            width_ = st.width_;
-            height_ = st.height_;
-            padding_ = st.padding_;
-            line_width_ = st.line_width_;
-            stop_radius_ = st.stop_radius_;
-            bus_label_font_size_ = st.bus_label_font_size_;
-            bus_label_offset_ = st.bus_label_offset_;
-            stop_label_font_size_ = st.stop_label_font_size_;
-            stop_label_offset_ = st.stop_label_offset_;
-            underlayer_color_ = st.underlayer_color_;
-            underlayer_width_ = st.underlayer_width_;
-            color_palette_ = st.color_palette_;
-        }
-
-        double width_ = 0;                 // ширина изображения в пикселях
-        double height_ = 0;                // высота изображения в пикселях
-        double padding_ = 0;               // отступ краёв карты от границ SVG-документа
-        double line_width_ = 0;            // толщина линий, которыми рисуются автобусные маршруты
-        double stop_radius_ = 0;           // радиус окружностей, которыми обозначаются остановки
-        unsigned int bus_label_font_size_ = 0;      // размер текста, которым написаны названия автобусных маршрутов
-        offset bus_label_offset_;          // смещение надписи с названием маршрута относительно координат конечной остановки на карте
-        int stop_label_font_size_ = 0;     // размер текста, которым отображаются названия остановок
-        offset stop_label_offset_;         // смещение названия остановки относительно её координат на карте
-        Color underlayer_color_;           // цвет подложки под названиями остановок и маршрутов
-        double underlayer_width_ = 0;      // толщина подложки под названиями остановок и маршрутов
-        std::vector<Color> color_palette_; // цветовая палитра
-    };
-
-    // Функция для вывода цвета в SVG формате
-    std::string toSvg(Color color);
 
     class SphereProjector
     {
@@ -132,7 +58,7 @@ namespace renderer
         double zoom_coeff_ = 0;
     };
 
-    svg::Document map_renderer(render_settings &st,
+    svg::Document MapRenderer(RenderSettings &st,
                                std::vector<geo::Coordinates> &allCoords,
                                std::vector<std::pair<std::vector<std::pair<geo::Coordinates, std::string>>, std::pair<std::string, bool>>> &bus_stops_coords,
                                std::ostream &out);

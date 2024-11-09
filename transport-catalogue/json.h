@@ -39,10 +39,14 @@ namespace json
         Node(std::nullptr_t);
         Node(Array array);
         Node(Dict map);
-        Node(const std::string& value);
-        Node(bool value);
-        Node(int value);
-        Node(double value);
+
+
+        // int> double, bool, string
+        template <typename Type>
+        Node(Type val)
+            : value_(val)
+        {
+        }
 
         const Array &AsArray() const;
         const Dict &AsMap() const;
@@ -118,6 +122,6 @@ namespace json
     void PrintValue(const double &value, const PrintContext& ctx);
     void PrintValue(const int &value, const PrintContext& ctx); */
 
-    void PrintNode(const Node &node, const PrintContext& ctx);
+    void PrintNode(const Node &node, const PrintContext &ctx);
 
 } // namespace json

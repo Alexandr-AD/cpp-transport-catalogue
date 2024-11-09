@@ -2,8 +2,10 @@
 #include <cassert>
 #include <iterator>
 #include <map>
+#include <sstream>
 
 #include "json_reader.h"
+#include "map_renderer.h"
 
 void catalogueInput::CommandDescription::AddBusesDescr(std::vector<BusDescr> busDescr)
 {
@@ -16,25 +18,28 @@ void catalogueInput::CommandDescription::AddStopsDescr(std::vector<StopDescr> st
 
 void catalogueInput::CommandDescription::AddStopDescr(catalogueInput::StopDescr stopsDescr)
 {
-    stopsDescr_.push_back(stopsDescr);
+    stopsDescr_.push_back(std::move(stopsDescr));
 }
 void catalogueInput::CommandDescription::AddBusDescr(catalogueInput::BusDescr busDescr)
 {
-    busDescr_.push_back(busDescr);
+    busDescr_.push_back(std::move(busDescr));
 }
-
-std::vector<catalogueInput::StopDescr> catalogueInput::CommandDescription::GetStopsDescr()
+void catalogueInput::CommandDescription::AddBaseRequest(StatRequest request)
+{
+    requests_.push_back(std::move(request));
+}
+std::vector<catalogueInput::StopDescr> catalogueInput::CommandDescription::GetStopsDescr() const
 {
     return stopsDescr_;
 }
-std::vector<catalogueInput::BusDescr> catalogueInput::CommandDescription::GetBusesDescr()
+std::vector<catalogueInput::BusDescr> catalogueInput::CommandDescription::GetBusesDescr() const
 {
     return busDescr_;
 }
 
-const renderer::Color read_color(const json::Node &node)
+const svg::Color ReadColor(const json::Node &node)
 {
-    renderer::Color color;
+    svg::Color color;
     if (node.IsArray())
     {
         color = {
@@ -54,11 +59,11 @@ const renderer::Color read_color(const json::Node &node)
     return color;
 }
 
-renderer::render_settings catalogueInput::read_settings(const json::Document &doc)
+renderer::RenderSettings catalogueInput::ReadSettings(const json::Document &doc)
 {
     auto inpMap = doc.GetRoot().AsMap().at("render_settings").AsMap();
 
-    renderer::render_settings settings;
+    renderer::RenderSettings settings;
 
     settings.width_ = inpMap.at("width").AsDouble();
     settings.height_ = inpMap.at("height").AsDouble();
@@ -71,16 +76,165 @@ renderer::render_settings catalogueInput::read_settings(const json::Document &do
     settings.stop_label_offset_ = {inpMap.at("stop_label_offset").AsArray()[0].AsDouble(), inpMap.at("stop_label_offset").AsArray()[1].AsDouble()};
     settings.underlayer_width_ = inpMap.at("underlayer_width").AsDouble();
 
-    settings.underlayer_color_ = read_color(inpMap.at("underlayer_color"));
+    settings.underlayer_color_ = ReadColor(inpMap.at("underlayer_color"));
     for (const auto &color : inpMap.at("color_palette").AsArray())
     {
-        // const renderer::Color col = read_color(color);
-        settings.color_palette_.push_back(read_color(color));
+        settings.color_palette_.push_back(ReadColor(color));
     }
 
     return settings;
 }
 
+void catalogueInput::InputReader::ApplyCommands(TransportCatalogue &catalogue, const catalogueInput::CommandDescription &cmds) const
+{
+    using namespace std::literals;
+    for (const auto &command : cmds.GetStopsDescr())
+    {
+        catalogue.AddStop({command.name_, command.coords_, {}});
+    }
+    for (const auto &command : cmds.GetStopsDescr())
+    {
+        for (const auto &[dest_stop, dist] : command.distance_to_stops_)
+        {
+            catalogue.SetStopDist(command.name_, dest_stop, dist);
+        }
+    }
+    for (const auto &command : cmds.GetBusesDescr())
+    {
+        std::vector<const Stop *> stops_ptr;
+
+        for (std::string_view s : command.stops_)
+        {
+            const auto stop = catalogue.GetStop(s);
+            if (stop != nullptr)
+            {
+                stops_ptr.push_back(stop);
+            }
+        }
+
+        if (!command.is_roundtrip_)
+        {
+            if (command.stops_.size() > 1)
+            {
+                for (int i = command.stops_.size() - 2; i >= 0; --i)
+                {
+                    const auto stop = catalogue.GetStop(command.stops_[i]);
+                    if (stop != nullptr)
+                    {
+                        stops_ptr.push_back(stop);
+                    }
+                }
+            }
+        }
+        catalogue.AddBus({command.name_, stops_ptr, command.is_roundtrip_});
+    }
+}
+
+catalogueInput::CommandDescription catalogueInput::InputReader::ParseCommandInput(json::Document doc)
+{
+    catalogueInput::CommandDescription res;
+
+    for (const auto &node : doc.GetRoot().AsMap().at("base_requests").AsArray())
+    {
+        auto tmp = node.AsMap();
+        if (tmp.at("type").AsString() == "Stop")
+        {
+            std::string name = tmp.at("name").AsString();
+            double latitude = tmp.at("latitude").AsDouble();
+            double longitude = tmp.at("longitude").AsDouble();
+            std::map<std::string, int> distance_to_stops;
+            for (const auto &[stop, dist] : tmp.at("road_distances").AsMap())
+            {
+                distance_to_stops[stop] = dist.AsInt();
+            }
+
+            res.AddStopDescr({name,
+                              {
+                                  latitude,
+                                  longitude,
+                              },
+                              distance_to_stops});
+        }
+        else if (tmp.at("type").AsString() == "Bus")
+        {
+            std::string name = tmp.at("name").AsString();
+            std::vector<std::string> stops;
+
+            for (const auto &stop : tmp.at("stops").AsArray())
+            {
+                stops.push_back(stop.AsString());
+            }
+            bool is_roundtrip = tmp.at("is_roundtrip").AsBool();
+            res.AddBusDescr({name,
+                             stops,
+                             is_roundtrip});
+        }
+    }
+
+    return res;
+}
+
+json::Document printStat::PrintStats(const TransportCatalogue &transport_catalogue, json::Array requests, const json::Document &inpDoc)
+{
+    using namespace std::literals;
+    json::Array res;
+    for (const auto &request : requests)
+    {
+        if (request.AsMap().at("type").AsString() == "Stop")
+        {
+            auto stop = transport_catalogue.GetStop(request.AsMap().at("name").AsString());
+            if (stop == nullptr)
+            {
+                json::Node errNode({{"request_id"s, json::Node(request.AsMap().at("id"s).AsInt())},
+                                    {"error_message"s, json::Node("not found"s)}});
+                res.push_back(std::move(errNode));
+            }
+            else
+            {
+                json::Array buses;
+                for (const auto &bus_name : transport_catalogue.StatsOfStop(request.AsMap().at("name"s).AsString()))
+                {
+                    buses.push_back({std::string(bus_name)});
+                }
+                json::Node stopStats({{"buses"s, json::Node(buses)},
+                                      {"request_id"s, json::Node(request.AsMap().at("id"s).AsInt())}});
+                res.push_back(std::move(stopStats));
+            }
+        }
+        if (request.AsMap().at("type"s).AsString() == "Bus"s)
+        {
+            auto bus = transport_catalogue.GetBus(request.AsMap().at("name").AsString());
+            if (bus == nullptr)
+            {
+                json::Node errNode({{"request_id"s, json::Node(request.AsMap().at("id"s).AsInt())},
+                                    {"error_message"s, json::Node("not found"s)}});
+                res.push_back(std::move(errNode));
+            }
+            else
+            {
+                auto bus_stats = transport_catalogue.StatsOfBus(request.AsMap().at("name"s).AsString());
+                res.push_back(json::Node({{"curvature"s, bus_stats.value().curvature},
+                                          {"request_id"s, request.AsMap().at("id"s).AsInt()},
+                                          {"route_length"s, bus_stats.value().RouteLength},
+                                          {"stop_count"s, bus_stats.value().StopsOnRoute},
+                                          {"unique_stop_count"s, bus_stats.value().UniqueStopsOnRoute}}));
+            }
+        }
+        if (request.AsMap().at("type"s).AsString() == "Map"s)
+        {
+            std::ostringstream outStr;
+            auto settings = catalogueInput::ReadSettings(inpDoc);
+            auto allCoords = transport_catalogue.GetStopsCoords();
+            auto busCoords = transport_catalogue.GetBusStopsCoords();
+            renderer::MapRenderer(settings, allCoords, busCoords, outStr);
+            res.push_back(json::Node({{"map"s, outStr.str()},
+                                      {"request_id"s, request.AsMap().at("id"s).AsInt()}}));
+        }
+    }
+    json::Document doc(res);
+
+    return doc;
+}
 // /*
 //  * Здесь можно разместить код наполнения транспортного справочника данными из JSON,
 //  * а также код обработки запросов к базе и формирование массива ответов в формате JSON

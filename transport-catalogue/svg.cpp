@@ -1,3 +1,5 @@
+#include <sstream>
+
 #include "svg.h"
 
 namespace svg
@@ -163,6 +165,8 @@ namespace svg
         }
         out << "</svg>"; //<< std::endl;
     }
+
+
     std::ostream &operator<<(std::ostream &out, const StrokeLineCap &slc)
     {
         switch (slc)
@@ -201,5 +205,52 @@ namespace svg
         }
         return out;
     }
-
+    void svg::Color::operator=(const Color &other)
+    {
+        name = other.name;
+        r = other.r;
+        g = other.g;
+        b = other.b;
+        a = other.a;
+    }
+    /* 
+    std::ostream &Color::operator<<(std::ostream &out) const
+    {
+        // std::ostringstream outStr;
+        if (this->name != "")
+        {
+            out << this->name;
+            return out;
+        }
+        else if (this->a == 1.0)
+        {
+            out << "rgb(" << this->r << "," << this->g << "," << this->b << ")";
+        }
+        else
+        {
+            out << "rgba(" << this->r << "," << this->g << "," << this->b << "," << this->a << ")";
+        }
+        // out << outStr.str();
+        return out;
+    }
+ */
+    std::ostream &operator<<(std::ostream &out, const Color color)
+    {
+        // std::ostringstream outStr;
+        if (color.name != "")
+        {
+            out << color.name;
+            return out;
+        }
+        else if (color.a == 1.0)
+        {
+            out << "rgb(" << color.r << "," << color.g << "," << color.b << ")";
+        }
+        else
+        {
+            out << "rgba(" << color.r << "," << color.g << "," << color.b << "," << color.a << ")";
+        }
+        // out << outStr.str();
+        return out;
+    }
 } // namespace svg

@@ -1,26 +1,5 @@
 #pragma once
 
-#include "transport_catalogue.h"
-#include "json_reader.h"
-
-class InputReader
-{
-public:
-    /**
-     * Парсит строку в структуру CommandDescription и сохраняет результат в commands_
-     */
-    catalogueInput::CommandDescription ParseCommandInput(json::Document doc);
-
-    /**
-     * Наполняет данными транспортный справочник, используя команды из commands_
-     */
-    void ApplyCommands([[maybe_unused]] TransportCatalogue &catalogue, catalogueInput::CommandDescription cmds) const;
-};
-
-namespace printStat
-{
-    json::Document PrintStats(const TransportCatalogue &tansport_catalogue, json::Array requests, const json::Document &inpDoc);
-}
 
 // Класс RequestHandler играет роль Фасада, упрощающего взаимодействие JSON reader-а
 // с другими подсистемами приложения.

@@ -214,40 +214,19 @@ namespace json
         : value_(nullptr)
     {
     }
-
     Node::Node(std::nullptr_t)
         : value_(nullptr)
     {
     }
-
     Node::Node(Array array)
         : value_(move(array))
     {
     }
-
     Node::Node(Dict map)
         : value_(move(map))
     {
     }
 
-    Node::Node(bool value)
-        : value_(move(value))
-    {
-    }
-
-    Node::Node(int value)
-        : value_(move(value))
-    {
-    }
-    Node::Node(double value)
-        : value_(move(value))
-    {
-    }
-
-    Node::Node(const string &value)
-        : value_(move(value))
-    {
-    }
     //-----------------------------возврат значения конкретного типа------------------------
     const Array &Node::AsArray() const
     {

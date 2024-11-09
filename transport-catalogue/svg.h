@@ -10,7 +10,39 @@
 namespace svg
 {
 
-    using Color = std::string;
+    struct Color
+    {
+
+        std::string name; // имя цвета в виде строки
+        int r = 0,
+            g = 0,
+            b = 0;      // компоненты цвета в формате svg::Rgb
+        double a = 0.0; // opacity в формате svg::Rgba
+
+        Color(const Color &other)
+        {
+            name = other.name;
+            r = other.r;
+            g = other.g;
+            b = other.b;
+            a = other.a;
+        }
+
+        Color() = default;
+
+        // Конструктор для инициализации цвета из строки
+        Color(std::string name_) : name(name_), r(0), g(0), b(0), a(1.0) {}
+
+        // Конструктор для инициализации цвета из массива из трёх целых чисел
+        Color(int r_, int g_, int b_) : name(""), r(r_), g(g_), b(b_), a(1.0) {}
+
+        // Конструктор для инициализации цвета из массива из четырёх элементов
+        Color(int r_, int g_, int b_, float a_) : name(""), r(r_), g(g_), b(b_), a(a_) {}
+
+        void operator=(const Color &other);
+        // std::ostream &operator<<(std::ostream &out) const;
+    };
+    std::ostream &operator<<(std::ostream &out, const Color colot);
 
     // Объявив в заголовочном файле константу со спецификатором inline,
     // мы сделаем так, что она будет одной на все единицы трансляции,
@@ -77,11 +109,15 @@ namespace svg
 
             if (fill_color_)
             {
-                out << " fill=\""sv << *fill_color_ << "\""sv;
+                out << " fill=\""sv;
+                out << *fill_color_;
+                out << "\""sv;
             }
             if (stroke_color_)
             {
-                out << " stroke=\""sv << *stroke_color_ << "\""sv;
+                out << " stroke=\""sv;
+                out << *stroke_color_;
+                out << "\""sv;
             }
             if (stroke_width_)
             {

@@ -13,7 +13,7 @@ int main()
         ifstream input("input1.json");
         ofstream output("out1.json");
 
-        InputReader reader;
+        catalogueInput::InputReader reader;
         TransportCatalogue transport_catalogue;
 
         const json::Document doc = json::Load(input);
@@ -26,7 +26,7 @@ int main()
         json::Print(out_doc, output);
     }
 
-    {
+    /* {
         ifstream input("input2.json");
         ofstream output("out2.json");
 
@@ -58,11 +58,11 @@ int main()
         json::Document out_doc = printStat::PrintStats(transport_catalogue, doc.GetRoot().AsMap().at("stat_requests").AsArray(), doc);
 
         json::Print(out_doc, output);
-    }
+    } */
     // auto settings = catalogueInput::read_settings(doc);
     // auto allCoords = transport_catalogue.GetStopsCoords();
     // auto busCoords = transport_catalogue.GetBusStopsCoords();
-    // renderer::map_renderer(settings, allCoords, busCoords, output);
+    // renderer::MapRenderer(settings, allCoords, busCoords, output);
 
     // auto commandsRequest = reader.ParseCommandRequest(input);
     // reader.ApplyCommands(transport_catalogue, commandsRequest);
