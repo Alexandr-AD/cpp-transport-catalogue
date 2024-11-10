@@ -218,15 +218,6 @@ namespace json
         : value_(nullptr)
     {
     }
-    Node::Node(Array array)
-        : value_(move(array))
-    {
-    }
-    Node::Node(Dict map)
-        : value_(move(map))
-    {
-    }
-
     //-----------------------------возврат значения конкретного типа------------------------
     const Array &Node::AsArray() const
     {

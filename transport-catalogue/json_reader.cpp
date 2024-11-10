@@ -185,7 +185,7 @@ json::Document printStat::PrintStats(const TransportCatalogue &transport_catalog
             auto stop = transport_catalogue.GetStop(request.AsMap().at("name").AsString());
             if (stop == nullptr)
             {
-                json::Node errNode({{"request_id"s, json::Node(request.AsMap().at("id"s).AsInt())},
+                json::Node errNode(json::Dict{{"request_id"s, json::Node(request.AsMap().at("id"s).AsInt())},
                                     {"error_message"s, json::Node("not found"s)}});
                 res.push_back(std::move(errNode));
             }
@@ -196,7 +196,7 @@ json::Document printStat::PrintStats(const TransportCatalogue &transport_catalog
                 {
                     buses.push_back({std::string(bus_name)});
                 }
-                json::Node stopStats({{"buses"s, json::Node(buses)},
+                json::Node stopStats(json::Dict{{"buses"s, json::Node(buses)},
                                       {"request_id"s, json::Node(request.AsMap().at("id"s).AsInt())}});
                 res.push_back(std::move(stopStats));
             }
@@ -206,14 +206,14 @@ json::Document printStat::PrintStats(const TransportCatalogue &transport_catalog
             auto bus = transport_catalogue.GetBus(request.AsMap().at("name").AsString());
             if (bus == nullptr)
             {
-                json::Node errNode({{"request_id"s, json::Node(request.AsMap().at("id"s).AsInt())},
+                json::Node errNode(json::Dict{{"request_id"s, json::Node(request.AsMap().at("id"s).AsInt())},
                                     {"error_message"s, json::Node("not found"s)}});
                 res.push_back(std::move(errNode));
             }
             else
             {
                 auto bus_stats = transport_catalogue.StatsOfBus(request.AsMap().at("name"s).AsString());
-                res.push_back(json::Node({{"curvature"s, bus_stats.value().curvature},
+                res.push_back(json::Node(json::Dict{{"curvature"s, bus_stats.value().curvature},
                                           {"request_id"s, request.AsMap().at("id"s).AsInt()},
                                           {"route_length"s, bus_stats.value().RouteLength},
                                           {"stop_count"s, bus_stats.value().StopsOnRoute},
@@ -227,7 +227,7 @@ json::Document printStat::PrintStats(const TransportCatalogue &transport_catalog
             auto allCoords = transport_catalogue.GetStopsCoords();
             auto busCoords = transport_catalogue.GetBusStopsCoords();
             renderer::MapRenderer(settings, allCoords, busCoords, outStr);
-            res.push_back(json::Node({{"map"s, outStr.str()},
+            res.push_back(json::Node(json::Dict{{"map"s, outStr.str()},
                                       {"request_id"s, request.AsMap().at("id"s).AsInt()}}));
         }
     }

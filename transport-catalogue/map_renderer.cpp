@@ -4,50 +4,42 @@
 
 namespace renderer
 {
-    enum class TypeOfLabel
+    void SetBusTextProperties(RenderSettings &st, const std::string &data, int num_of_col, svg::Text &text, svg::Text &backing)
     {
-        BUS,
-        STOP
-    };
 
-    void SetTextProperties(TypeOfLabel type, RenderSettings &st, const std::string &data, int num_of_col, svg::Text &text, svg::Text &backing)
+        text.SetFillColor(st.color_palette_[num_of_col]);
+        text.SetOffset({st.bus_label_offset_.dx_, st.bus_label_offset_.dy_});
+        text.SetFontSize(st.bus_label_font_size_);
+        text.SetFontFamily("Verdana");
+        text.SetFontWeight("bold");
+        text.SetData(data);
+
+        backing.SetFillColor(st.underlayer_color_);
+        backing.SetStrokeColor(st.underlayer_color_);
+        backing.SetStrokeWidth(st.underlayer_width_);
+        backing.SetStrokeLineCap(svg::StrokeLineCap::ROUND);
+        backing.SetStrokeLineJoin(svg::StrokeLineJoin::ROUND);
+        backing.SetOffset({st.bus_label_offset_.dx_, st.bus_label_offset_.dy_});
+        backing.SetFontSize(st.bus_label_font_size_);
+        backing.SetFontFamily("Verdana");
+        backing.SetFontWeight("bold");
+        backing.SetData(data);
+    }
+    void SetStopTextProperties(RenderSettings &st, int num_of_col, svg::Text &text, svg::Text &backing)
     {
-        if (type == TypeOfLabel::BUS)
-        {
-            text.SetFillColor(st.color_palette_[num_of_col]);
-            text.SetOffset({st.bus_label_offset_.dx_, st.bus_label_offset_.dy_});
-            text.SetFontSize(st.bus_label_font_size_);
-            text.SetFontFamily("Verdana");
-            text.SetFontWeight("bold");
-            text.SetData(data);
+        text.SetOffset({st.stop_label_offset_.dx_, st.stop_label_offset_.dy_});
+        text.SetFontSize(st.stop_label_font_size_);
+        text.SetFontFamily("Verdana");
+        text.SetFillColor({"black"});
 
-            backing.SetFillColor(st.underlayer_color_);
-            backing.SetStrokeColor(st.underlayer_color_);
-            backing.SetStrokeWidth(st.underlayer_width_);
-            backing.SetStrokeLineCap(svg::StrokeLineCap::ROUND);
-            backing.SetStrokeLineJoin(svg::StrokeLineJoin::ROUND);
-            backing.SetOffset({st.bus_label_offset_.dx_, st.bus_label_offset_.dy_});
-            backing.SetFontSize(st.bus_label_font_size_);
-            backing.SetFontFamily("Verdana");
-            backing.SetFontWeight("bold");
-            backing.SetData(data);
-        }
-        else
-        {
-            text.SetOffset({st.stop_label_offset_.dx_, st.stop_label_offset_.dy_});
-            text.SetFontSize(st.stop_label_font_size_);
-            text.SetFontFamily("Verdana");
-            text.SetFillColor({"black"});
-
-            backing.SetOffset({st.stop_label_offset_.dx_, st.stop_label_offset_.dy_});
-            backing.SetFontSize(st.stop_label_font_size_);
-            backing.SetFontFamily("Verdana");
-            backing.SetFillColor(st.underlayer_color_);
-            backing.SetStrokeColor(st.underlayer_color_);
-            backing.SetStrokeWidth(st.underlayer_width_);
-            backing.SetStrokeLineCap(svg::StrokeLineCap::ROUND);
-            backing.SetStrokeLineJoin(svg::StrokeLineJoin::ROUND);
-        }
+        backing.SetOffset({st.stop_label_offset_.dx_, st.stop_label_offset_.dy_});
+        backing.SetFontSize(st.stop_label_font_size_);
+        backing.SetFontFamily("Verdana");
+        backing.SetFillColor(st.underlayer_color_);
+        backing.SetStrokeColor(st.underlayer_color_);
+        backing.SetStrokeWidth(st.underlayer_width_);
+        backing.SetStrokeLineCap(svg::StrokeLineCap::ROUND);
+        backing.SetStrokeLineJoin(svg::StrokeLineJoin::ROUND);
     }
 
     bool IsZero(double value)
@@ -106,7 +98,7 @@ namespace renderer
                 bus_name_text.SetPosition(proj(bus_stops_coords[i].first[0].first));
                 bus_name_text_backing.SetPosition(proj(bus_stops_coords[i].first[0].first));
 
-                SetTextProperties(TypeOfLabel::BUS, st, bus_stops_coords[i].second.first, k, bus_name_text, bus_name_text_backing);
+                SetBusTextProperties(st, bus_stops_coords[i].second.first, k, bus_name_text, bus_name_text_backing);
 
                 doc.AddPtr(std::make_unique<svg::Text>(bus_name_text_backing));
                 doc.AddPtr(std::make_unique<svg::Text>(bus_name_text));
@@ -121,7 +113,7 @@ namespace renderer
                     bus_name_text2.SetPosition(proj(bus_stops_coords[i].first[bus_stops_coords[i].first.size() / 2].first));
                     bus_name_text_backing2.SetPosition(proj(bus_stops_coords[i].first[bus_stops_coords[i].first.size() / 2].first));
 
-                    SetTextProperties(TypeOfLabel::BUS, st, bus_stops_coords[i].second.first, k, bus_name_text2, bus_name_text_backing2);
+                    SetBusTextProperties(st, bus_stops_coords[i].second.first, k, bus_name_text2, bus_name_text_backing2);
 
                     doc.AddPtr(std::make_unique<svg::Text>(bus_name_text_backing2));
                     doc.AddPtr(std::make_unique<svg::Text>(bus_name_text2));
@@ -147,7 +139,7 @@ namespace renderer
                 stop_label.SetPosition(proj(allCoords_sortedByStopName[j]));
                 stop_label_backing.SetPosition(proj(allCoords_sortedByStopName[j]));
 
-                SetTextProperties(TypeOfLabel::STOP, st, "", k, stop_label, stop_label_backing);
+                SetStopTextProperties(st, k, stop_label, stop_label_backing);
 
                 for (size_t i = 0; i < bus_stops_coords.size(); ++i)
                 {
