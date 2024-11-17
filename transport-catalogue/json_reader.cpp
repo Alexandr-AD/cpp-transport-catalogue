@@ -42,18 +42,26 @@ const svg::Color ReadColor(const json::Node &node)
     svg::Color color;
     if (node.IsArray())
     {
-        color = {
-            node.AsArray()[0].AsInt(),
-            node.AsArray()[1].AsInt(),
-            node.AsArray()[2].AsInt()};
-        if (node.AsArray().size() == 4)
+        if (node.AsArray().size() == 3)
         {
-            color.a = node.AsArray()[3].AsDouble();
+            svg::RGB tmp = {
+                node.AsArray()[0].AsInt(),
+                node.AsArray()[1].AsInt(),
+                node.AsArray()[2].AsInt()};
+            color = std::move(tmp);
+        }
+        else {
+            svg::RGBA tmp = {
+                node.AsArray()[0].AsInt(),
+                node.AsArray()[1].AsInt(),
+                node.AsArray()[2].AsInt(),
+                node.AsArray()[3].AsDouble()};
+            color = std::move(tmp);
         }
     }
     else if (node.IsString())
     {
-        color.name = node.AsString();
+        color = node.AsString();
     }
 
     return color;
@@ -186,7 +194,7 @@ json::Document printStat::PrintStats(const TransportCatalogue &transport_catalog
             if (stop == nullptr)
             {
                 json::Node errNode(json::Dict{{"request_id"s, json::Node(request.AsMap().at("id"s).AsInt())},
-                                    {"error_message"s, json::Node("not found"s)}});
+                                              {"error_message"s, json::Node("not found"s)}});
                 res.push_back(std::move(errNode));
             }
             else
@@ -197,7 +205,7 @@ json::Document printStat::PrintStats(const TransportCatalogue &transport_catalog
                     buses.push_back({std::string(bus_name)});
                 }
                 json::Node stopStats(json::Dict{{"buses"s, json::Node(buses)},
-                                      {"request_id"s, json::Node(request.AsMap().at("id"s).AsInt())}});
+                                                {"request_id"s, json::Node(request.AsMap().at("id"s).AsInt())}});
                 res.push_back(std::move(stopStats));
             }
         }
@@ -207,17 +215,17 @@ json::Document printStat::PrintStats(const TransportCatalogue &transport_catalog
             if (bus == nullptr)
             {
                 json::Node errNode(json::Dict{{"request_id"s, json::Node(request.AsMap().at("id"s).AsInt())},
-                                    {"error_message"s, json::Node("not found"s)}});
+                                              {"error_message"s, json::Node("not found"s)}});
                 res.push_back(std::move(errNode));
             }
             else
             {
                 auto bus_stats = transport_catalogue.StatsOfBus(request.AsMap().at("name"s).AsString());
                 res.push_back(json::Node(json::Dict{{"curvature"s, bus_stats.value().curvature},
-                                          {"request_id"s, request.AsMap().at("id"s).AsInt()},
-                                          {"route_length"s, bus_stats.value().RouteLength},
-                                          {"stop_count"s, bus_stats.value().StopsOnRoute},
-                                          {"unique_stop_count"s, bus_stats.value().UniqueStopsOnRoute}}));
+                                                    {"request_id"s, request.AsMap().at("id"s).AsInt()},
+                                                    {"route_length"s, bus_stats.value().RouteLength},
+                                                    {"stop_count"s, bus_stats.value().StopsOnRoute},
+                                                    {"unique_stop_count"s, bus_stats.value().UniqueStopsOnRoute}}));
             }
         }
         if (request.AsMap().at("type"s).AsString() == "Map"s)
@@ -228,7 +236,7 @@ json::Document printStat::PrintStats(const TransportCatalogue &transport_catalog
             auto busCoords = transport_catalogue.GetBusStopsCoords();
             renderer::MapRenderer(settings, allCoords, busCoords, outStr);
             res.push_back(json::Node(json::Dict{{"map"s, outStr.str()},
-                                      {"request_id"s, request.AsMap().at("id"s).AsInt()}}));
+                                                {"request_id"s, request.AsMap().at("id"s).AsInt()}}));
         }
     }
     json::Document doc(res);

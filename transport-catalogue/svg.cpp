@@ -205,14 +205,6 @@ namespace svg
         }
         return out;
     }
-    void svg::Color::operator=(const Color &other)
-    {
-        name = other.name;
-        r = other.r;
-        g = other.g;
-        b = other.b;
-        a = other.a;
-    }
     /* 
     std::ostream &Color::operator<<(std::ostream &out) const
     {
@@ -237,18 +229,19 @@ namespace svg
     std::ostream &operator<<(std::ostream &out, const Color color)
     {
         // std::ostringstream outStr;
-        if (color.name != "")
+        if (std::holds_alternative<std::string>(color))
         {
-            out << color.name;
-            return out;
+            out << std::get<std::string>(color);
         }
-        else if (color.a == 1.0)
+        else if (std::holds_alternative<RGB>(color))
         {
-            out << "rgb(" << color.r << "," << color.g << "," << color.b << ")";
+            const RGB &tmp = std::get<RGB>(color);
+            out << "rgb(" << tmp.r << "," << tmp.g << "," << tmp.b << ")";
         }
         else
         {
-            out << "rgba(" << color.r << "," << color.g << "," << color.b << "," << color.a << ")";
+            const RGBA &tmp = std::get<RGBA>(color);
+            out << "rgba(" << tmp.r << "," << tmp.g << "," << tmp.b << "," << tmp.a << ")";
         }
         // out << outStr.str();
         return out;
