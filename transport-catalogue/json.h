@@ -37,10 +37,14 @@ namespace json
 
         Node();
         Node(std::nullptr_t);
+        Node(Array array);
+        Node(Dict map);
 
+
+        // int> double, bool, string
         template <typename Type>
         Node(Type val)
-            : value_(std::move(val))
+            : value_(val)
         {
         }
 
