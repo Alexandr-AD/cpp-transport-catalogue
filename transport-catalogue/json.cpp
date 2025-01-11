@@ -218,14 +218,6 @@ namespace json
         : value_(nullptr)
     {
     }
-    Node::Node(Array array)
-        : value_(move(array))
-    {
-    }
-    Node::Node(Dict map)
-        : value_(move(map))
-    {
-    }
 
     //-----------------------------возврат значения конкретного типа------------------------
     const Array &Node::AsArray() const
@@ -238,6 +230,22 @@ namespace json
     }
 
     const Dict &Node::AsMap() const
+    {
+        if (!IsMap())
+        {
+            throw logic_error("Not map");
+        }
+        return get<Dict>(value_);
+    }
+    Array &Node::ChangeArray()
+    {
+        if (!IsArray())
+        {
+            throw logic_error("Not array");
+        }
+        return get<Array>(value_);
+    }
+    Dict &Node::ChangeMap()
     {
         if (!IsMap())
         {

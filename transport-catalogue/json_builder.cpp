@@ -14,11 +14,9 @@ namespace json
         {
             if (GetCurrentNode()->IsMap())
             {
-                auto &current_node = const_cast<Dict &>(GetCurrentNode()->AsMap());
-                current_node[str] = Node{str};
-                nodes_stack_.push_back(&current_node[str]);
-
-                return KeyContext(*this);
+                auto &current_node = GetCurrentNode()->ChangeMap();
+                current_node[str] = Node{str};              // ключ временно записывается в стек, удаляется при записи значения
+                nodes_stack_.push_back(&current_node[str]); // не понял насчет поиска - тут же не поиск, а запись в вектор?
             }
             else
             {
@@ -27,45 +25,18 @@ namespace json
         }
         else
         {
-            StartDict();
-            Dict &current_node = const_cast<Dict &>(GetCurrentNode()->AsMap());
-            current_node[str] = Node{str};
+            StartDict();                                        // не понимаю, почему некорректно и какая ошибочная ситуация? Ключ начинает словарь
+            Dict &current_node = GetCurrentNode()->ChangeMap(); // не понял насчет исключений. ниже же нигде не выбрасываются исключения?
+            current_node[str] = Node{str};                      // да и все тесты в тренажере оно прошло, почему тут должна быть ошибочная ситуация?
             nodes_stack_.push_back(&current_node[str]);
-
-            return KeyContext(*this);
         }
         return KeyContext(*this);
     }
     Builder::ValueContext Builder::Value(Node::Value val)
     {
-        Node tmp_node;
-        switch (val.index())
-        {
-        case 0:
-            tmp_node = nullptr;
-            break;
-        case 1:
-            tmp_node = std::get<json::Array>(val);
-            break;
-        case 2:
-            tmp_node = std::get<json::Dict>(val);
-            break;
-        case 3:
-            tmp_node = std::get<bool>(val);
-            break;
-        case 4:
-            tmp_node = std::get<int>(val);
-            break;
-        case 5:
-            tmp_node = std::get<double>(val);
-            break;
-        case 6:
-            tmp_node = std::get<std::string>(val);
-            break;
-        default:
-            break;
-        }
-        InsertNode(tmp_node);
+        Node tmp_node(val);
+
+        InsertNode(std::move(tmp_node));
 
         return ValueContext(*this);
     }
@@ -109,14 +80,11 @@ namespace json
     }
     Node &Builder::Build()
     {
-        if (root_.GetValue().index() == 0)
+        if (std::holds_alternative<std::nullptr_t>(root_.GetValue()) || !nodes_stack_.empty())
         {
             throw std::logic_error("Attempt to build JSON which isn't finalized");
         }
-        if (!nodes_stack_.empty())
-        {
-            throw std::logic_error("Attempt to build JSON which isn't finalized");
-        }
+
         return root_;
     }
 
@@ -132,7 +100,7 @@ namespace json
     {
         if (nodes_stack_.empty())
         {
-            if (root_.GetValue().index() == 0)
+            if (std::holds_alternative<std::nullptr_t>(root_.GetValue()))
             {
                 root_ = node;
                 return &root_;
@@ -142,17 +110,17 @@ namespace json
         {
             if (GetCurrentNode()->IsArray())
             {
-                Array &current_node = const_cast<Array &>(GetCurrentNode()->AsArray());
+                Array &current_node = GetCurrentNode()->ChangeArray();
                 current_node.push_back(node);
                 return &current_node.back();
             }
             else if (GetCurrentNode()->IsString())
             {
-                const std::string key = GetCurrentNode()->AsString();
-                nodes_stack_.pop_back();
+                const std::string key = GetCurrentNode()->AsString(); // ключ хранится в стеке временно, в следующей же строке он удаляется из стека
+                nodes_stack_.pop_back();                              // это работает как флаг для записи значения по ключу
                 if (GetCurrentNode()->IsMap())
                 {
-                    Dict &current_node = const_cast<Dict &>(GetCurrentNode()->AsMap());
+                    Dict &current_node = GetCurrentNode()->ChangeMap();
                     current_node[key] = node;
                     return &current_node[key];
                 }

@@ -37,19 +37,18 @@ namespace json
 
         Node();
         Node(std::nullptr_t);
-        Node(Array array);
-        Node(Dict map);
 
-
-        // int> double, bool, string
+        // int> double, bool, string, Array, Map
         template <typename Type>
         Node(Type val)
-            : value_(val)
+            : value_(std::move(val))
         {
         }
 
         const Array &AsArray() const;
         const Dict &AsMap() const;
+        Array &ChangeArray();
+        Dict &ChangeMap();
         int AsInt() const;
         double AsDouble() const;
         bool AsBool() const;
