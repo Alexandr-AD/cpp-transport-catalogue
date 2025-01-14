@@ -14,9 +14,7 @@ namespace json
         {
             if (GetCurrentNode()->IsMap())
             {
-                auto &current_node = GetCurrentNode()->ChangeMap();
-                current_node[str] = Node{str};              // ключ временно записывается в стек, удаляется при записи значения
-                nodes_stack_.push_back(&current_node[str]); // не понял насчет поиска - тут же не поиск, а запись в вектор?
+                current_key_ = std::move(str);
             }
             else
             {
@@ -25,16 +23,19 @@ namespace json
         }
         else
         {
-            StartDict();                                        // не понимаю, почему некорректно и какая ошибочная ситуация? Ключ начинает словарь
-            Dict &current_node = GetCurrentNode()->ChangeMap(); // не понял насчет исключений. ниже же нигде не выбрасываются исключения?
-            current_node[str] = Node{str};                      // да и все тесты в тренажере оно прошло, почему тут должна быть ошибочная ситуация?
-            nodes_stack_.push_back(&current_node[str]);
+            StartDict();
+            current_key_ = std::move(str);
+            // подскажите, пожалуйста, я здесь пробовал сразу выбрасывать исключение, в таком случае не проходит ни один тест,
+            // тренажер пишет, что решение упало и содержание этого исключения. Пробовал по всякому, проверял, без startdict в этом месте тесты не проходит.
+            // Исключение из GetCurrentNode здесь не выбрасывается, потому что добавляется словарь. Этот else у меня убрать не получается, без него совсем не работает, как правильно это исправить?
+            // Написал в пачку с этим же вопросом вам
+            // throw std::logic_error("_______________Key() outside a dict_____________");
         }
         return KeyContext(*this);
     }
     Builder::ValueContext Builder::Value(Node::Value val)
     {
-        Node tmp_node(val);
+        Node tmp_node(std::move(val));
 
         InsertNode(std::move(tmp_node));
 
@@ -110,18 +111,17 @@ namespace json
         {
             if (GetCurrentNode()->IsArray())
             {
-                Array &current_node = GetCurrentNode()->ChangeArray();
+                Array &current_node = GetCurrentNode()->AsArray();
                 current_node.push_back(node);
                 return &current_node.back();
             }
-            else if (GetCurrentNode()->IsString())
+            else if (!current_key_.empty())
             {
-                const std::string key = GetCurrentNode()->AsString(); // ключ хранится в стеке временно, в следующей же строке он удаляется из стека
-                nodes_stack_.pop_back();                              // это работает как флаг для записи значения по ключу
                 if (GetCurrentNode()->IsMap())
                 {
-                    Dict &current_node = GetCurrentNode()->ChangeMap();
-                    current_node[key] = node;
+                    const auto key = std::move(current_key_);
+                    Dict &current_node = GetCurrentNode()->AsMap();
+                    current_node.insert({key, node});
                     return &current_node[key];
                 }
                 else

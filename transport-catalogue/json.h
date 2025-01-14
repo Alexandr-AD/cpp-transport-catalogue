@@ -47,8 +47,8 @@ namespace json
 
         const Array &AsArray() const;
         const Dict &AsMap() const;
-        Array &ChangeArray();
-        Dict &ChangeMap();
+        Array &AsArray();
+        Dict &AsMap();
         int AsInt() const;
         double AsDouble() const;
         bool AsBool() const;

@@ -71,12 +71,6 @@ namespace json
             }
         }
 
-        /*         Node LoadString(istream &input)
-                {
-                    string line = json::LoadString(input);
-                    return Node(move(line));
-                } */
-
         Node LoadString(std::istream &input)
         {
             // using namespace std::literals;
@@ -237,7 +231,7 @@ namespace json
         }
         return get<Dict>(value_);
     }
-    Array &Node::ChangeArray()
+    Array &Node::AsArray()
     {
         if (!IsArray())
         {
@@ -245,7 +239,7 @@ namespace json
         }
         return get<Array>(value_);
     }
-    Dict &Node::ChangeMap()
+    Dict &Node::AsMap()
     {
         if (!IsMap())
         {

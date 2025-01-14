@@ -9,9 +9,9 @@ namespace json
     {
         class BaseContext;
         class ValueContext;
-        class KeyContext;
         class DictItemContext;
         class ArrayItemContext;
+        class KeyContext;
 
     public:
         Builder();
@@ -29,6 +29,7 @@ namespace json
         Node *InsertNode(Node);
         Node root_;
         std::vector<Node *> nodes_stack_;
+        std::string current_key_;
 
         class BaseContext
         {
