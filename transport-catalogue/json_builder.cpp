@@ -23,13 +23,7 @@ namespace json
         }
         else
         {
-            StartDict();
-            current_key_ = std::move(str);
-            // подскажите, пожалуйста, я здесь пробовал сразу выбрасывать исключение, в таком случае не проходит ни один тест,
-            // тренажер пишет, что решение упало и содержание этого исключения. Пробовал по всякому, проверял, без startdict в этом месте тесты не проходит.
-            // Исключение из GetCurrentNode здесь не выбрасывается, потому что добавляется словарь. Этот else у меня убрать не получается, без него совсем не работает, как правильно это исправить?
-            // Написал в пачку с этим же вопросом вам
-            // throw std::logic_error("_______________Key() outside a dict_____________");
+            throw std::logic_error("Key() outside a dict");
         }
         return KeyContext(*this);
     }
@@ -115,11 +109,12 @@ namespace json
                 current_node.push_back(node);
                 return &current_node.back();
             }
-            else if (!current_key_.empty())
+            else if (current_key_.has_value())
             {
                 if (GetCurrentNode()->IsMap())
                 {
-                    const auto key = std::move(current_key_);
+                    const std::string key = current_key_.value();
+                    current_key_.reset();
                     Dict &current_node = GetCurrentNode()->AsMap();
                     current_node.insert({key, node});
                     return &current_node[key];

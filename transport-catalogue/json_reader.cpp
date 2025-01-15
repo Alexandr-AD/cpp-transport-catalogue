@@ -199,6 +199,7 @@ json::Document printStat::PrintStats(const TransportCatalogue &transport_catalog
                 //                               {"error_message"s, json::Node("not found"s)}});
                 json::Node errNode(
                     json::Builder{}
+                        .StartDict()
                         .Key("request_id"s)
                         .Value(request.AsMap().at("id"s).AsInt())
                         .Key("error_message"s)
@@ -218,6 +219,7 @@ json::Document printStat::PrintStats(const TransportCatalogue &transport_catalog
                 //                                 {"request_id"s, json::Node(request.AsMap().at("id"s).AsInt())}});
                 json::Node stopStats(
                     json::Builder{}
+                        .StartDict()
                         .Key("buses"s)
                         .Value(buses)
                         .Key("request_id"s)
@@ -236,6 +238,7 @@ json::Document printStat::PrintStats(const TransportCatalogue &transport_catalog
                 //                               {"error_message"s, json::Node("not found"s)}});
                 json::Node errNode(
                     json::Builder{}
+                        .StartDict()
                         .Key("request_id"s)
                         .Value(request.AsMap().at("id"s).AsInt())
                         .Key("error_message"s)
@@ -254,6 +257,7 @@ json::Document printStat::PrintStats(const TransportCatalogue &transport_catalog
                 //                                     {"unique_stop_count"s, bus_stats.value().UniqueStopsOnRoute}}));
                 res.push_back(
                     json::Builder{}
+                        .StartDict()
                         .Key("curvature"s)
                         .Value(bus_stats.value().curvature)
                         .Key("request_id"s)
@@ -279,6 +283,7 @@ json::Document printStat::PrintStats(const TransportCatalogue &transport_catalog
             //                                     {"request_id"s, request.AsMap().at("id"s).AsInt()}}));
             res.push_back(
                 json::Builder{}
+                    .StartDict()
                     .Key("map"s)
                     .Value(outStr.str())
                     .Key("request_id"s)

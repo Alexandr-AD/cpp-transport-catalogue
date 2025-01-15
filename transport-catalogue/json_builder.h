@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include "json.h"
 
 namespace json
@@ -29,7 +30,7 @@ namespace json
         Node *InsertNode(Node);
         Node root_;
         std::vector<Node *> nodes_stack_;
-        std::string current_key_;
+        std::optional<std::string> current_key_;
 
         class BaseContext
         {
