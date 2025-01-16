@@ -97,7 +97,7 @@ namespace json
         {
             if (std::holds_alternative<std::nullptr_t>(root_.GetValue()))
             {
-                root_ = node;
+                root_ = std::move(node);
                 return &root_;
             }
         }
@@ -106,18 +106,17 @@ namespace json
             if (GetCurrentNode()->IsArray())
             {
                 Array &current_node = GetCurrentNode()->AsArray();
-                current_node.push_back(node);
+                current_node.push_back(std::move(node));
                 return &current_node.back();
             }
             else if (current_key_.has_value())
             {
                 if (GetCurrentNode()->IsMap())
                 {
-                    const std::string key = current_key_.value();
-                    current_key_.reset();
+                    std::string key = std::move(current_key_.value());
                     Dict &current_node = GetCurrentNode()->AsMap();
-                    current_node.insert({key, node});
-                    return &current_node[key];
+                    auto it = current_node.insert({std::move(key), std::move(node)});
+                    return &it.first->second;
                 }
                 else
                 {
