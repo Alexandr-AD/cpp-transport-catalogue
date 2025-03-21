@@ -8,6 +8,7 @@
 #include "geo.h"
 #include "map_renderer.h"
 #include "transport_catalogue.h"
+#include "transport_router.h"
 #include "json.h"
 
 namespace catalogueInput
@@ -31,7 +32,8 @@ namespace catalogueInput
         std::string name_;
     };
 
-    renderer::RenderSettings ReadSettings(const json::Document &);
+    renderer::RenderSettings ReadRenderSettings(const json::Document &);
+    routing::RoutingSettings ReadRoutingSettings(const json::Document &);
 
     class CommandDescription
     {

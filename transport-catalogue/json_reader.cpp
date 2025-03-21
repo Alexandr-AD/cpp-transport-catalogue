@@ -69,7 +69,7 @@ const svg::Color ReadColor(const json::Node &node)
     return color;
 }
 
-renderer::RenderSettings catalogueInput::ReadSettings(const json::Document &doc)
+renderer::RenderSettings catalogueInput::ReadRenderSettings(const json::Document &doc)
 {
     auto inpMap = doc.GetRoot().AsMap().at("render_settings").AsMap();
 
@@ -188,6 +188,8 @@ json::Document printStat::PrintStats(const TransportCatalogue &transport_catalog
 {
     using namespace std::literals;
     json::Array res;
+    routing::TransportRouter transportRouter;
+
     for (const auto &request : requests)
     {
         if (request.AsMap().at("type").AsString() == "Stop")
@@ -275,7 +277,7 @@ json::Document printStat::PrintStats(const TransportCatalogue &transport_catalog
         if (request.AsMap().at("type"s).AsString() == "Map"s)
         {
             std::ostringstream outStr;
-            auto settings = catalogueInput::ReadSettings(inpDoc);
+            auto settings = catalogueInput::ReadRenderSettings(inpDoc);
             auto allCoords = transport_catalogue.GetStopsCoords();
             auto busCoords = transport_catalogue.GetBusStopsCoords();
             renderer::MapRenderer(settings, allCoords, busCoords, outStr);
@@ -291,10 +293,107 @@ json::Document printStat::PrintStats(const TransportCatalogue &transport_catalog
                     .EndDict()
                     .Build());
         }
+        if (request.AsMap().at("type"s).AsString() == "Route"s)
+        {
+            // routing::TransportRouter transportRouter;
+            auto settings = catalogueInput::ReadRoutingSettings(inpDoc);
+            transportRouter.SetSettings(std::move(settings));
+            graph::DirectedWeightedGraph<double> &graph = transportRouter.BuildGraph(transport_catalogue);
+            static graph::Router router(graph);
+
+            // auto stopFrom = transport_catalogue.GetStop(request.AsMap().at("from"s).AsString());
+            // auto stopTo = transport_catalogue.GetStop(request.AsMap().at("to"s).AsString());
+            std::string stopFrom = request.AsMap().at("from"s).AsString();
+            std::string stopTo = request.AsMap().at("to"s).AsString();
+
+            size_t vertex_from = transportRouter.GetStopsAsNumber().at(stopFrom).first;
+            size_t vertex_to = transportRouter.GetStopsAsNumber().at(stopTo).first;
+
+            auto route = router.BuildRoute(vertex_from, vertex_to);
+
+            if (!route.has_value())
+            {
+                json::Node errNode(
+                    json::Builder{}
+                        .StartDict()
+                        .Key("request_id"s)
+                        .Value(request.AsMap().at("id"s).AsInt())
+                        .Key("error_message"s)
+                        .Value("not found"s)
+                        .EndDict()
+                        .Build());
+                res.push_back(errNode);
+            }
+            else
+            {
+                json::Array items;
+                for (const auto &edgeId : route.value().edges)
+                {
+                    const auto &edge = graph.GetEdge(edgeId);
+                    // const auto &verId_from = transportRouter.GetIndexesStops().at(edge.from);
+                    // const auto &verId_to = transportRouter.GetIndexesStops().at(edge.to);
+                    if (edge.from % 2 == 0 && (edge.from + 1 == edge.to))
+                    {
+                        auto stopName = transportRouter.GetNumsAsStopName().at(static_cast<int>(edge.from));
+
+                        items.push_back(
+                            json::Builder{}
+                                .StartDict()
+                                .Key("type"s)
+                                .Value("Wait"s)
+                                .Key("stop_name"s)
+                                .Value(stopName.data())
+                                .Key("time"s)
+                                .Value(edge.weight)
+                                .EndDict()
+                                .Build());
+                    }
+                    else
+                    {
+                        items.push_back(
+                            json::Builder{}
+                                .StartDict()
+                                .Key("type"s)
+                                .Value("Bus"s)
+                                .Key("bus"s)
+                                .Value(edge.bus)
+                                .Key("span_count"s)
+                                .Value(edge.span_count)
+                                .Key("time"s)
+                                .Value(edge.weight)
+                                .EndDict()
+                                .Build());
+                    }
+                }
+                res.push_back(
+                    json::Builder{}
+                        .StartDict()
+                        .Key("request_id"s)
+                        .Value(request.AsMap().at("id"s).AsInt())
+                        .Key("total_time"s)
+                        .Value(route.value().weight)
+                        .Key("items"s)
+                        .Value(items)
+                        .EndDict()
+                        .Build());
+            }
+
+            // int id = request.AsMap().at("id"s).AsInt();
+        }
     }
+
     json::Document doc(res);
 
     return doc;
+}
+
+routing::RoutingSettings catalogueInput::ReadRoutingSettings(const json::Document &doc)
+{
+    auto inpMap = doc.GetRoot().AsMap().at("routing_settings").AsMap();
+    int bus_wait_time = inpMap.at("bus_wait_time").AsInt();
+    int bus_velocity = inpMap.at("bus_velocity").AsInt();
+
+    return routing::RoutingSettings{bus_wait_time, bus_velocity};
 }
 // /*
 //  * Здесь можно разместить код наполнения транспортного справочника данными из JSON,

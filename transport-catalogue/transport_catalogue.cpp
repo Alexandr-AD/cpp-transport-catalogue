@@ -38,6 +38,56 @@ std::optional<int> TransportCatalogue::GetStopDist(std::string_view begin_stop_n
     }
     return nullopt;
 }
+int TransportCatalogue::ComputeDistBtwnStops(int begin_stop, int dest_stop, const Bus &bus) const
+{
+    int res = 0;
+    optional<int> tmp = 0;
+    if (!bus.is_roundtrip)
+    {
+        if (begin_stop < dest_stop)
+        {
+            for (size_t i = begin_stop; i < dest_stop; ++i)
+            {
+                tmp = GetStopDist(bus.stops[i]->name, bus.stops[i + 1]->name);
+                if (tmp.has_value())
+                {
+                    res += tmp.value();
+                }
+            }
+        }
+        else
+        {
+            for (size_t i = begin_stop; i > dest_stop; --i)
+            {
+                tmp = GetStopDist(bus.stops[i]->name, bus.stops[i - 1]->name);
+                if (tmp.has_value())
+                {
+                    res += tmp.value();
+                }
+            }
+        }
+    }
+    else
+    {
+        // int length = ComputeRouteLength(bus);
+        int i = 0;
+        while (i != dest_stop)
+        {
+            tmp = GetStopDist(bus.stops[i % bus.stops.size()]->name,
+                              bus.stops[(i + 1) % bus.stops.size()]->name);
+
+            if (tmp.has_value())
+            {
+                res += tmp.value();
+            }
+            ++i;
+            // if (begin_stop > dest_stop)
+            // {
+            // }
+        }
+    }
+    return res;
+}
 const Bus *TransportCatalogue::GetBus(std::string_view name) const
 {
     auto res = map_buses_.find(name);
@@ -137,13 +187,13 @@ std::vector<geo::Coordinates> TransportCatalogue::GetStopsCoords() const
 {
     std::vector<geo::Coordinates> res;
     res.reserve(stops_.size());
-    std::vector<const Stop*> sort_stops; // = stops_;
-    for(auto & stop: stops_) {
+    std::vector<const Stop *> sort_stops; // = stops_;
+    for (auto &stop : stops_)
+    {
         sort_stops.push_back(&stop);
     }
-    std::sort(sort_stops.begin(), sort_stops.end(), [](const Stop* lhs, const Stop* rhs) {
-        return lhs->name < rhs->name;
-    });
+    std::sort(sort_stops.begin(), sort_stops.end(), [](const Stop *lhs, const Stop *rhs)
+              { return lhs->name < rhs->name; });
     for (const auto &stop : sort_stops)
     {
         for (const auto &bus : buses_)
@@ -175,4 +225,23 @@ double GetRouteLength(const Bus &bus)
         res += geo::ComputeDistance(bus.stops[i]->coords, bus.stops[i + 1]->coords);
     }
     return res;
+}
+
+int TransportCatalogue::GetStopsCount() const
+{
+    return map_stops_.size();
+}
+int TransportCatalogue::GetBusesCount() const
+{
+    return map_buses_.size();
+}
+
+const std::deque<Bus> &TransportCatalogue::GetBuses() const
+{
+    return buses_;
+}
+
+const std::deque<Stop> &TransportCatalogue::GetAllStops() const
+{
+    return stops_;
 }
