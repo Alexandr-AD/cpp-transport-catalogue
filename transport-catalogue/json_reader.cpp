@@ -190,6 +190,11 @@ json::Document printStat::PrintStats(const TransportCatalogue &transport_catalog
     json::Array res;
     routing::TransportRouter transportRouter;
 
+    auto settings = catalogueInput::ReadRoutingSettings(inpDoc);
+    transportRouter.SetSettings(std::move(settings));
+    // const graph::DirectedWeightedGraph<double> &graph = transportRouter.BuildGraph(transport_catalogue);
+    graph::Router router(transportRouter.BuildGraph(transport_catalogue));
+
     for (const auto &request : requests)
     {
         if (request.AsMap().at("type").AsString() == "Stop")
@@ -296,10 +301,10 @@ json::Document printStat::PrintStats(const TransportCatalogue &transport_catalog
         if (request.AsMap().at("type"s).AsString() == "Route"s)
         {
             // routing::TransportRouter transportRouter;
-            auto settings = catalogueInput::ReadRoutingSettings(inpDoc);
-            transportRouter.SetSettings(std::move(settings));
-            graph::DirectedWeightedGraph<double> &graph = transportRouter.BuildGraph(transport_catalogue);
-            static graph::Router router(graph);
+            // auto settings = catalogueInput::ReadRoutingSettings(inpDoc);
+            // transportRouter.SetSettings(std::move(settings));
+            // graph::DirectedWeightedGraph<double> graph = transportRouter.BuildGraph(transport_catalogue);
+            // static graph::Router router(graph);
 
             // auto stopFrom = transport_catalogue.GetStop(request.AsMap().at("from"s).AsString());
             // auto stopTo = transport_catalogue.GetStop(request.AsMap().at("to"s).AsString());
@@ -329,12 +334,15 @@ json::Document printStat::PrintStats(const TransportCatalogue &transport_catalog
                 json::Array items;
                 for (const auto &edgeId : route.value().edges)
                 {
-                    const auto &edge = graph.GetEdge(edgeId);
-                    // const auto &verId_from = transportRouter.GetIndexesStops().at(edge.from);
-                    // const auto &verId_to = transportRouter.GetIndexesStops().at(edge.to);
-                    if (edge.from % 2 == 0 && (edge.from + 1 == edge.to))
+                    // const auto &edge = graph.GetEdge(edgeId);
+                    const auto &edgeInfo = transportRouter.GetEdgeInfo(edgeId);
+                    // const auto &verId_from = transportRouter.GetIndexesStops().at(edgeInfo.from);
+                    // const auto &verId_to = transportRouter.GetIndexesStops().at(edgeInfo.to);
+
+                    // if (edge.from % 2 == 0 && (edge.from + 1 == edge.to))
+                    if (transportRouter.GetEdgeType().at(edgeId) == routing::EdgeType::WAIT)
                     {
-                        auto stopName = transportRouter.GetNumsAsStopName().at(static_cast<int>(edge.from));
+                        auto stopName = transportRouter.GetNumsAsStopName().at(static_cast<int>(edgeInfo.from));
 
                         items.push_back(
                             json::Builder{}
@@ -344,7 +352,7 @@ json::Document printStat::PrintStats(const TransportCatalogue &transport_catalog
                                 .Key("stop_name"s)
                                 .Value(stopName.data())
                                 .Key("time"s)
-                                .Value(edge.weight)
+                                .Value(edgeInfo.weight)
                                 .EndDict()
                                 .Build());
                     }
@@ -356,11 +364,11 @@ json::Document printStat::PrintStats(const TransportCatalogue &transport_catalog
                                 .Key("type"s)
                                 .Value("Bus"s)
                                 .Key("bus"s)
-                                .Value(edge.bus)
+                                .Value(edgeInfo.bus)
                                 .Key("span_count"s)
-                                .Value(edge.span_count)
+                                .Value(edgeInfo.span_count)
                                 .Key("time"s)
-                                .Value(edge.weight)
+                                .Value(edgeInfo.weight)
                                 .EndDict()
                                 .Build());
                     }
@@ -381,7 +389,6 @@ json::Document printStat::PrintStats(const TransportCatalogue &transport_catalog
             // int id = request.AsMap().at("id"s).AsInt();
         }
     }
-
     json::Document doc(res);
 
     return doc;
