@@ -38,8 +38,6 @@ namespace routing
         TransportRouter() = default;
         const graph::DirectedWeightedGraph<double> &BuildGraph(const TransportCatalogue &catalogue);
 
-        json::Document FindRoute(std::string_view from, std::string_view to, graph::Router<double> router) const;
-
         void SetSettings(RoutingSettings &&settings);
 
         const std::unordered_map<int, EdgeType> &GetEdgeType() const;
