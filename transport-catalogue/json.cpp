@@ -73,8 +73,6 @@ namespace json
 
         Node LoadString(std::istream &input)
         {
-            // using namespace std::literals;
-
             auto it = std::istreambuf_iterator<char>(input);
             auto end = std::istreambuf_iterator<char>();
             std::string s;
@@ -332,8 +330,6 @@ namespace json
 
     Node LoadNumber(std::istream &input)
     {
-        // using namespace std::literals;
-
         std::string parsed_num;
 
         // Считывает в parsed_num очередной символ из input

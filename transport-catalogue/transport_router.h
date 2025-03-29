@@ -1,6 +1,5 @@
 #pragma once
 
-// #include "transport_catalogue.h"
 #include <string>
 
 #include "json.h"
@@ -21,6 +20,15 @@ namespace routing
         int bus_wait_time_ = 1;
         int bus_velocity_ = 1;
     };
+
+    struct RouteItem
+    {
+        EdgeType type_;
+        std::string stop_name_;
+        std::string bus_;
+        int span_count_ = 0;
+        double time_ = 0;
+    };
     struct Wait
     {
         std::string stop_name_;
@@ -36,22 +44,25 @@ namespace routing
     {
     public:
         TransportRouter() = default;
-        const graph::DirectedWeightedGraph<double> &BuildGraph(const TransportCatalogue &catalogue);
+        void BuildGraph(const TransportCatalogue &catalogue);
+
+        const std::optional<std::vector<RouteItem>> FindRoute(std::string_view from, std::string_view to) const;
 
         void SetSettings(RoutingSettings &&settings);
 
+    private:
         const std::unordered_map<int, EdgeType> &GetEdgeType() const;
         const std::unordered_map<std::string_view, std::pair<int, int>> &GetStopsAsNumber() const;
         const std::unordered_map<int, std::string_view> &GetNumsAsStopName() const;
         const graph::Edge<double> GetEdgeInfo(int edgeId) const;
         const RoutingSettings &GetSettings() const;
 
-    private:
         RoutingSettings settings_;
         graph::DirectedWeightedGraph<double> graph_;
-        // std::optional<graph::DirectedWeightedGraph<double>> graph_;
         std::unordered_map<std::string_view, std::pair<int, int>> stop_as_pair_number_;
         std::unordered_map<int, std::string_view> number_as_stop_name;
         std::unordered_map<int, EdgeType> edge_id_to_type_;
+
+        graph::Router<double> *router_;
     };
 } // namespace routing

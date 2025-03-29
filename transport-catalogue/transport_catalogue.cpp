@@ -69,7 +69,6 @@ int TransportCatalogue::ComputeDistBtwnStops(int begin_stop, int dest_stop, cons
     }
     else
     {
-        // int length = ComputeRouteLength(bus);
         int i = 0;
         while (i != dest_stop)
         {
@@ -81,9 +80,6 @@ int TransportCatalogue::ComputeDistBtwnStops(int begin_stop, int dest_stop, cons
                 res += tmp.value();
             }
             ++i;
-            // if (begin_stop > dest_stop)
-            // {
-            // }
         }
     }
     return res;
@@ -187,7 +183,7 @@ std::vector<geo::Coordinates> TransportCatalogue::GetStopsCoords() const
 {
     std::vector<geo::Coordinates> res;
     res.reserve(stops_.size());
-    std::vector<const Stop *> sort_stops; // = stops_;
+    std::vector<const Stop *> sort_stops; 
     for (auto &stop : stops_)
     {
         sort_stops.push_back(&stop);

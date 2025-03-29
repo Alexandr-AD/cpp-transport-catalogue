@@ -1,18 +1,13 @@
 #include "geo.h"
 #include "transport_router.h"
-// #include "json_reader.h"
 #include "json_builder.h"
 
 #include <exception>
 
-// #include <iostream> //удалить
-
 using namespace std;
 
-const graph::DirectedWeightedGraph<double> &routing::TransportRouter::BuildGraph(const TransportCatalogue &catalogue)
+void routing::TransportRouter::BuildGraph(const TransportCatalogue &catalogue)
 {
-    // if (!graph_.has_value())
-    // {
     graph::DirectedWeightedGraph<double> res_graph(2 * catalogue.GetStopsCount());
 
     int stop_from_vertex = 0;
@@ -90,8 +85,46 @@ const graph::DirectedWeightedGraph<double> &routing::TransportRouter::BuildGraph
     }
 
     graph_ = std::move(res_graph);
-    // }
-    return graph_;
+    router_ = new graph::Router(graph_);
+}
+
+const optional<vector<routing::RouteItem>> routing::TransportRouter::FindRoute(std::string_view from, std::string_view to) const
+{
+
+    vector<routing::RouteItem> tmp;
+
+    size_t vertex_from = stop_as_pair_number_.at(from).first;
+    size_t vertex_to = stop_as_pair_number_.at(to).first;
+
+    auto route = router_->BuildRoute(vertex_from, vertex_to);
+    if (!route.has_value())
+    {
+        return nullopt;
+    }
+    for (const auto &edgeId : route.value().edges)
+    {
+        const auto &edgeInfo = GetEdgeInfo(edgeId);
+        if (GetEdgeType().at(edgeId) == routing::EdgeType::WAIT)
+        {
+            auto stopName = GetNumsAsStopName().at(static_cast<int>(edgeInfo.from));
+            routing::RouteItem item;
+            item.type_ = routing::EdgeType::WAIT;
+            item.stop_name_ = stopName.data();
+            item.time_ = edgeInfo.weight;
+            tmp.push_back(move(item));
+        }
+        else
+        {
+            routing::RouteItem item;
+            item.type_ = routing::EdgeType::ROUTE;
+            item.bus_ = edgeInfo.bus;
+            item.span_count_ = edgeInfo.span_count;
+            item.time_ = edgeInfo.weight;
+            tmp.push_back(move(item));
+        }
+    }
+    optional<vector<routing::RouteItem>> res(tmp);
+    return res;
 }
 
 const std::unordered_map<std::string_view, std::pair<int, int>> &routing::TransportRouter::GetStopsAsNumber() const

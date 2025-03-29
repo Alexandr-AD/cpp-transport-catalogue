@@ -16,7 +16,7 @@ public:
 	int ComputeDistBtwnStops(int begin_stop, int dest_stop, const Bus &bus) const;
 	const Bus *GetBus(std::string_view name) const;
 	const Stop *GetStop(std::string_view name) const;
-	std::vector<std::pair<std::vector<std::pair<geo::Coordinates, std::string>>, std::pair<std::string, bool>>> GetBusStopsCoords(/* const Bus& bus */) const;
+	std::vector<std::pair<std::vector<std::pair<geo::Coordinates, std::string>>, std::pair<std::string, bool>>> GetBusStopsCoords() const;
 	std::vector<geo::Coordinates> GetStopsCoords() const;
 	int ComputeRouteLength(const Bus &) const;
 	std::set<std::string_view> StatsOfStop(std::string_view name) const;

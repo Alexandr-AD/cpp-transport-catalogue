@@ -205,30 +205,8 @@ namespace svg
         }
         return out;
     }
-    /* 
-    std::ostream &Color::operator<<(std::ostream &out) const
-    {
-        // std::ostringstream outStr;
-        if (this->name != "")
-        {
-            out << this->name;
-            return out;
-        }
-        else if (this->a == 1.0)
-        {
-            out << "rgb(" << this->r << "," << this->g << "," << this->b << ")";
-        }
-        else
-        {
-            out << "rgba(" << this->r << "," << this->g << "," << this->b << "," << this->a << ")";
-        }
-        // out << outStr.str();
-        return out;
-    }
- */
     std::ostream &operator<<(std::ostream &out, const Color color)
     {
-        // std::ostringstream outStr;
         if (std::holds_alternative<std::string>(color))
         {
             out << std::get<std::string>(color);
@@ -243,7 +221,6 @@ namespace svg
             const RGBA &tmp = std::get<RGBA>(color);
             out << "rgba(" << tmp.r << "," << tmp.g << "," << tmp.b << "," << tmp.a << ")";
         }
-        // out << outStr.str();
         return out;
     }
 } // namespace svg

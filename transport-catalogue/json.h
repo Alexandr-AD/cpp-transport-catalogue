@@ -32,13 +32,11 @@ namespace json
     class Node
     {
     public:
-        /* Реализуйте Node, используя std::variant */
         using Value = std::variant<std::nullptr_t, Array, Dict, bool, int, double, std::string>;
 
         Node();
         Node(std::nullptr_t);
 
-        // int> double, bool, string, Array, Map
         template <typename Type>
         Node(Type val)
             : value_(std::move(val))
@@ -111,15 +109,6 @@ namespace json
             return {out, indent_step, indent_step + indent};
         }
     };
-
-    //-------------------------------Перегрузки функции PrintValue для вывода значений------------------------------
-    /* void PrintValue(std::nullptr_t, const PrintContext& ctx);
-    void PrintValue(const Array &array, const PrintContext& ctx);
-    void PrintValue(const Dict &dict, const PrintContext& ctx);
-    void PrintValue(const bool &b, const PrintContext& ctx);
-    void PrintValue(const std::string &str, const PrintContext& ctx);
-    void PrintValue(const double &value, const PrintContext& ctx);
-    void PrintValue(const int &value, const PrintContext& ctx); */
 
     void PrintNode(const Node &node, const PrintContext &ctx);
 
