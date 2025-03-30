@@ -311,7 +311,6 @@ json::Document printStat::PrintStats(const TransportCatalogue &transport_catalog
                 double routeTime = 0;
                 for (const auto &item : routeItems.value())
                 {
-                    // if (item.type_ == routing::EdgeType::WAIT)
                     if (std::holds_alternative<routing::WaitItem>(item))
                     {
                         auto &tmp = std::get<routing::WaitItem>(item);
