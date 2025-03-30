@@ -311,9 +311,11 @@ json::Document printStat::PrintStats(const TransportCatalogue &transport_catalog
                 double routeTime = 0;
                 for (const auto &item : routeItems.value())
                 {
-                    if (item.type_ == routing::EdgeType::WAIT)
+                    // if (item.type_ == routing::EdgeType::WAIT)
+                    if (std::holds_alternative<routing::WaitItem>(item))
                     {
-                        routeTime += item.time_;
+                        auto &tmp = std::get<routing::WaitItem>(item);
+                        routeTime += tmp.time_;
 
                         items.push_back(
                             json::Builder{}
@@ -321,15 +323,16 @@ json::Document printStat::PrintStats(const TransportCatalogue &transport_catalog
                                 .Key("type"s)
                                 .Value("Wait"s)
                                 .Key("stop_name"s)
-                                .Value(item.stop_name_)
+                                .Value(tmp.stop_name_)
                                 .Key("time"s)
-                                .Value(item.time_)
+                                .Value(tmp.time_)
                                 .EndDict()
                                 .Build());
                     }
                     else
                     {
-                        routeTime += item.time_;
+                        auto &tmp = std::get<routing::BusItem>(item);
+                        routeTime += tmp.time_;
 
                         items.push_back(
                             json::Builder{}
@@ -337,11 +340,11 @@ json::Document printStat::PrintStats(const TransportCatalogue &transport_catalog
                                 .Key("type"s)
                                 .Value("Bus"s)
                                 .Key("bus"s)
-                                .Value(item.bus_)
+                                .Value(tmp.bus_)
                                 .Key("span_count"s)
-                                .Value(item.span_count_)
+                                .Value(tmp.span_count_)
                                 .Key("time"s)
-                                .Value(item.time_)
+                                .Value(tmp.time_)
                                 .EndDict()
                                 .Build());
                     }

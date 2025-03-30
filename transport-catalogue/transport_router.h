@@ -21,15 +21,7 @@ namespace routing
         int bus_velocity_ = 1;
     };
 
-    struct RouteItem
-    {
-        EdgeType type_;
-        std::string stop_name_;
-        std::string bus_;
-        int span_count_ = 0;
-        double time_ = 0;
-    };
-    struct Wait
+    struct WaitItem
     {
         std::string stop_name_;
         double time_ = 0;
@@ -40,13 +32,14 @@ namespace routing
         int span_count_ = 0;
         double time_ = 0;
     };
+    using RouteItems = std::variant<WaitItem, BusItem>;
     class TransportRouter
     {
     public:
         TransportRouter() = default;
         void BuildGraph(const TransportCatalogue &catalogue);
 
-        const std::optional<std::vector<RouteItem>> FindRoute(std::string_view from, std::string_view to) const;
+        const std::optional<std::vector<RouteItems>> FindRoute(std::string_view from, std::string_view to) const;
 
         void SetSettings(RoutingSettings &&settings);
 

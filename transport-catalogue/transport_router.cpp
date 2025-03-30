@@ -88,10 +88,10 @@ void routing::TransportRouter::BuildGraph(const TransportCatalogue &catalogue)
     router_ = new graph::Router(graph_);
 }
 
-const optional<vector<routing::RouteItem>> routing::TransportRouter::FindRoute(std::string_view from, std::string_view to) const
+const optional<vector<routing::RouteItems>> routing::TransportRouter::FindRoute(std::string_view from, std::string_view to) const
 {
 
-    vector<routing::RouteItem> tmp;
+    vector<routing::RouteItems> tmp;
 
     size_t vertex_from = stop_as_pair_number_.at(from).first;
     size_t vertex_to = stop_as_pair_number_.at(to).first;
@@ -107,23 +107,21 @@ const optional<vector<routing::RouteItem>> routing::TransportRouter::FindRoute(s
         if (GetEdgeType().at(edgeId) == routing::EdgeType::WAIT)
         {
             auto stopName = GetNumsAsStopName().at(static_cast<int>(edgeInfo.from));
-            routing::RouteItem item;
-            item.type_ = routing::EdgeType::WAIT;
+            routing::WaitItem item;
             item.stop_name_ = stopName.data();
             item.time_ = edgeInfo.weight;
             tmp.push_back(move(item));
         }
         else
         {
-            routing::RouteItem item;
-            item.type_ = routing::EdgeType::ROUTE;
+            routing::BusItem item;
             item.bus_ = edgeInfo.bus;
             item.span_count_ = edgeInfo.span_count;
             item.time_ = edgeInfo.weight;
             tmp.push_back(move(item));
         }
     }
-    optional<vector<routing::RouteItem>> res(tmp);
+    optional<vector<routing::RouteItems>> res(tmp);
     return res;
 }
 
